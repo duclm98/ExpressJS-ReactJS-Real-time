@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Short-Polling</title>
+</head>
+
+<body>
+  <ul id="list"></ul>
+  <script id="template" type="text/x-handlebars-template">
+    {{#each this}}
+      <li>{{name}}</li>
+    {{/each}}
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+  <script>
+    let ts = 0;
+    // setInterval(loadCategories, 3000);
+
+    window.onload = loadCategories;
+    function loadCategories() {
+      const url = `http://localhost:3000/api/categories?ts=${ts}`;
+      axios.get(url)
+        .then(function (res) {
+          // console.log(res.data);
+          ts = res.data.return_ts;
+          const source = document.getElementById('template').innerHTML;
+          const template = Handlebars.compile(source);
+          const html = template(res.data.categories);
+          document.getElementById('list').innerHTML += html;
+        }).then(function () {
+          setTimeout(loadCategories, 3000);
+        });
+    }
+  </script>
+</body>
+
+</html>

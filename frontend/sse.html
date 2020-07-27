@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket</title>
+</head>
+
+<body>
+  <ul id="list"></ul>
+  <script id="template" type="text/x-handlebars-template">
+    {{#each this}}
+      <li>{{name}}</li>
+    {{/each}}
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+  <script>
+    function setupSSE() {
+      if (typeof (EventSource) === 'undefined') {
+        console.log('not support');
+        return;
+      }
+
+      var src = new EventSource('http://localhost:3000/categoryAddedEvent');
+
+      src.onerror = function (e) {
+        console.log('error: ' + e);
+      }
+
+      src.addEventListener('CATEGORY_ADDED', function (e) {
+        var data = JSON.parse(e.data);
+        var arr = [data];
+
+        var source = document.getElementById('template').innerHTML;
+        var template = Handlebars.compile(source);
+        var html = template(arr);
+        document.getElementById('list').innerHTML += html;
+      }, false);
+    }
+
+    let ts = 0;
+    function loadCategories() {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3000/api/categories',
+        timeout: 15000
+      });
+
+      const url = `?ts=${ts}`;
+      instance.get(url)
+        .then(function (res) {
+          ts = res.data.return_ts;
+          const source = document.getElementById('template').innerHTML;
+          const template = Handlebars.compile(source);
+          const html = template(res.data.categories);
+          document.getElementById('list').innerHTML += html;
+        });
+    }
+
+    window.onload = function () {
+      loadCategories();
+      setupSSE();
+    };
+
+  </script>
+</body>
+
+</html>

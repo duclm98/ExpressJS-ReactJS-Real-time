@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Long-Polling</title>
+</head>
+
+<body>
+  <ul id="list"></ul>
+  <script id="template" type="text/x-handlebars-template">
+    {{#each this}}
+      <li>{{name}}</li>
+    {{/each}}
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+  <script>
+    let ts = 0;
+    window.onload = loadCategories;
+
+    function loadCategories() {
+
+      const instance = axios.create({
+        baseURL: 'http://localhost:3000/api/categories',
+        timeout: 15000
+      });
+
+      const url = `lp?ts=${ts}`;
+      instance.get(url)
+        .then(function (res) {
+          if (res.status === 200) {
+            ts = res.data.return_ts;
+            const source = document.getElementById('template').innerHTML;
+            const template = Handlebars.compile(source);
+            const html = template(res.data.categories);
+            document.getElementById('list').innerHTML += html;
+          }
+        }).then(function () {
+          loadCategories();
+        });
+    }
+  </script>
+</body>
+
+</html>
